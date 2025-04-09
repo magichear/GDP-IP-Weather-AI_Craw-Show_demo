@@ -1,10 +1,11 @@
 import os
 import logging
+import asyncio
 import threading
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from Config import Config
 from Crawler import Crawler
 from QueryCore import QueryCore
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 
 class Server:
@@ -18,6 +19,7 @@ class Server:
         self.start_year = Config.get("START_YEAR")
         self.end_year = Config.get("END_YEAR")
         self.data_cache = {}
+        self.is_ready = False  # 初始化标志
         self.lock = threading.Lock()  # 虽然所有国家的名字不同，但还是加个锁
 
         # 初始化日志配置
@@ -32,13 +34,14 @@ class Server:
         )
         self.logger = logging.getLogger("Server")
 
-    def start(self):
+    def start(self, useNew=False):
         """
         启动服务器，完成初始化和数据缓存。
         """
         self.logger.info("[Server] Starting server...")
         self.logger.info("[Server] Preparing database...")
-        self.crawler.prepareDB()
+        if useNew:
+            self.crawler.prepareDB()
         self.logger.info("[Server] Loading country map...")
         country_map = self.query_core.data
         if not country_map:
@@ -48,11 +51,14 @@ class Server:
         self.logger.info(
             "[Server] Querying data for all countries and regions using threads..."
         )
-        self.queryAll(country_map)
+        if useNew:
+            self.queryAll(country_map)
 
         self.logger.info("[Server] Saving cached data...")
-        self.saveCache()
-
+        if useNew:
+            self.saveCache()
+        else:
+            self.loadCache()
         self.logger.info("[Server] Server started successfully.")
 
     def queryAll(self, country_map):
@@ -149,6 +155,9 @@ class Server:
             return None
         return [name.strip() for name in user_input.split(";")]
 
+    def getNames(self):
+        return list(self.query_core.data.keys())
+
     def run(self):
         """
         启动服务器并进入查询循环。
@@ -167,6 +176,13 @@ class Server:
                 fig.show()  # 显示图像
             else:
                 self.logger.error("[Error] Failed to generate GDP trend plot.")
+
+    async def start_async(self):
+        """
+        异步启动服务器
+        """
+        await asyncio.to_thread(self.start)  # 异步运行原有的 start 方法
+        self.is_ready = True  # 初始化完成后设置标志位
 
 
 if __name__ == "__main__":
