@@ -128,13 +128,39 @@ class Server:
 
     def getGDPTrend(self, country_names, start, end):
         """
-        :param country_name: 国家名称
-        :return            : GDP 趋势图
+        :param country_names: 国家名称列表
+        :param start: 起始年份
+        :param end: 结束年份
+        :return: GDP 趋势图
         """
+        # 从配置中获取起止年份
+        config_start_year = Config.get("START_YEAR")
+        config_end_year = Config.get("END_YEAR")
+
+        # 确保 start 和 end 在配置范围内
+        start = max(start, config_start_year)
+        end = min(end, config_end_year)
+
+        if start > end:
+            self.logger.error(f"[Error] Invalid year range: start={start}, end={end}")
+            return None
+
         data = {}
         for country_name in country_names:
             if country_name in self.data_cache:
-                data[country_name] = self.data_cache[country_name]
+                # 对数据进行切片
+                country_data = self.data_cache[country_name]
+                if isinstance(country_data, list):
+                    # 如果是列表，根据年份范围切片
+                    start_index = start - config_start_year
+                    end_index = end - config_start_year + 1
+                    sliced_data = country_data[start_index:end_index]
+                    data[country_name] = sliced_data
+                else:
+                    self.logger.error(
+                        f"[Error] Unexpected data format for country '{country_name}'."
+                    )
+                    continue
             else:
                 self.logger.error(
                     f"[Error] Country '{country_name}' not found in cache."
@@ -183,6 +209,12 @@ class Server:
         """
         await asyncio.to_thread(self.start)  # 异步运行原有的 start 方法
         self.is_ready = True  # 初始化完成后设置标志位
+
+    def stop(self):
+        """
+        停止后端服务。
+        """
+        self.logger.info("[Server] Stopping server...")
 
 
 if __name__ == "__main__":
