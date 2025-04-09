@@ -36,31 +36,57 @@ class QueryCore:
         """
         data = {}
 
-        for countryName in countryNames:
-            countryCode = self.__getCode(countryName)
-            url = f"{self.baseURL}{countryCode}&s=NGDPD,&sy={startYear}&ey={endYear}&{self.suffix}"
-            GDP = self.crawler.fetch_GDP_Data(url, endYear - startYear)
-            data[countryName] = GDP
+        # 获取两类国家编码
+        codes_with_prefix, codes_without_prefix = self.__getCode(countryNames)
 
+        # 检查是否有带前缀的编码
+        if codes_with_prefix:
+            url = f"{self.baseURL}{codes_with_prefix}&s=NGDPD,&sy={startYear}&ey={endYear}&{self.suffix}"
+            GDP_with_prefix = self.crawler.fetch_GDP_Data(
+                url, endYear - startYear, len(codes_with_prefix.split(","))
+            )
+            for countryName, gdp in GDP_with_prefix.items():
+                data[countryName] = gdp
+
+        # 检查是否有不带前缀的编码
+        if codes_without_prefix:
+            url = f"{self.baseURL}{codes_without_prefix}&s=NGDPD,&sy={startYear}&ey={endYear}&{self.suffix}"
+            GDP_without_prefix = self.crawler.fetch_GDP_Data(
+                url, endYear - startYear, len(codes_without_prefix.split(","))
+            )
+            for countryName, gdp in GDP_without_prefix.items():
+                data[countryName] = gdp
+
+        # 绘制所有数据
+        print(f"Data: {data}")
         self.__plot(startYear, endYear, data)
 
-    def __getCode(self, countryName):
+    def __getCode(self, countryNames):
         """
-        根据传入的国家名称返回处理后的国家代码字符串。
-        :param countryName: 国家名称
-        :return: 处理后的国家代码字符串
+        根据传入的国家名称列表返回两类国家代码字符串。
+        :param countryNames: 国家名称列表
+        :return: 两类国家代码字符串（带前缀和不带前缀），以逗号分隔
         """
-        countryCode = self.data.get(countryName)
-        if not countryCode:
-            print(f"Error: Country '{countryName}' not found in the data.")
-            return None
+        codes_with_prefix = []
+        codes_without_prefix = []
 
-        # 检查是否具有地区前缀
-        if countryCode.startswith(Config.get("CODE_PREFIX")):
-            countryCode = countryCode[2:]  # 去掉前缀
-            return f"a=1&c={countryCode},"
-        else:
-            return f"c={countryCode}"
+        for countryName in countryNames:
+            countryCode = self.data.get(countryName)
+            if not countryCode:
+                print(f"Error: Country '{countryName}' not found in the data.")
+                continue
+
+            # 检查是否具有地区前缀
+            if countryCode.startswith(Config.get("CODE_PREFIX")):
+                codes_with_prefix.append(countryCode[2:] + ",")
+            else:
+                codes_without_prefix.append(countryCode + ",")
+
+        # 将两类编码以逗号分隔
+        return (
+            f"a=1&c={''.join(codes_with_prefix)}" if codes_with_prefix else "",
+            f"c={''.join(codes_without_prefix)}" if codes_without_prefix else "",
+        )
 
     def __plot(self, start, end, data):
         """
@@ -96,7 +122,7 @@ class QueryCore:
 
 
 if __name__ == "__main__":
-    country_list = ["Palau", "Finland"]
+    country_list = ["Palau", "Finland", "Belgium"]
     start_year = 1990
     end_year = 2022
     query = QueryCore()

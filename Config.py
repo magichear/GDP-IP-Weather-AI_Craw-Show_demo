@@ -17,5 +17,7 @@ class Config:
         return getattr(cls, key, None)
 
     @staticmethod
-    def geTableDataXpath(td_index):
-        return f"/html/body/div[3]/div[5]/div/div[2]/table[1]/tbody/tr/td[{td_index}]"
+    def geGroupXpath(td_index, count):
+        if count == 1:
+            return f"/html/body/div[3]/div[5]/div/div[2]/table[1]/tbody/tr"
+        return f"/html/body/div[3]/div[5]/div/div[2]/table[1]/tbody/tr[{td_index}]"
