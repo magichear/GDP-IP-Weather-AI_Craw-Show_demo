@@ -59,7 +59,8 @@ class QueryCore:
 
         # 绘制所有数据
         # print(f"Data: {data}")
-        self.__plot(startYear, endYear, data)
+        # self.plot(startYear, endYear, data)
+        return data
 
     def __getCode(self, countryNames):
         """
@@ -88,11 +89,12 @@ class QueryCore:
             f"c={''.join(codes_without_prefix)}" if codes_without_prefix else "",
         )
 
-    def __plot(self, start, end, data):
+    def plot(self, start, end, data):
         """
         :param start: 开始年份
         :param end  : 结束年份
         :param data : 数据字典，键为国家名称，值为其对应年份内的GDP数据列表
+        :return     : 返回绘制的 Figure 对象
         """
         try:
 
@@ -104,7 +106,7 @@ class QueryCore:
                 return extrema_indices
 
             years = list(range(start, end + 1))
-            plt.figure(figsize=(12, 6))
+            fig, ax = plt.subplots(figsize=(12, 6))
 
             max_gdp = 0
 
@@ -112,15 +114,15 @@ class QueryCore:
                 if len(gdp_data) != len(years):
                     print(f"[Error] {country} 的数据长度与年份范围不匹配。")
                     print(gdp_data)
-                    return
+                    return None  # 返回 None 表示绘图失败
                 max_gdp = max(max_gdp, max(gdp_data))
-                plt.plot(years, gdp_data, marker="o", linestyle="-", label=country)
+                ax.plot(years, gdp_data, marker="o", linestyle="-", label=country)
 
                 # 在极大值处标注
                 extrema = find_extrema(gdp_data)
                 for index, extrema_type in extrema:
                     if extrema_type == "max":
-                        plt.text(
+                        ax.text(
                             years[index],
                             gdp_data[index],
                             f"{gdp_data[index]:.2f}",
@@ -129,17 +131,37 @@ class QueryCore:
                             ha="center",
                         )
 
-            plt.title(f"GDP Trend from {start} to {end}", fontsize=14)
-            plt.xlabel("Year", fontsize=12)
-            plt.ylabel("GDP (USD, in billions)", fontsize=12)
-            plt.xticks(years, rotation=45)
-            plt.ylim(0, max_gdp * 1.1)
-            plt.legend()
+            ax.set_title(f"GDP Trend from {start} to {end}", fontsize=14)
+            ax.set_xlabel("Year", fontsize=12)
+            ax.set_ylabel("GDP (USD, in billions)", fontsize=12)
+            ax.set_xticks(years)
+            ax.tick_params(axis="x", rotation=45)
+            ax.set_ylim(0, max_gdp * 1.1)
+            ax.legend()
             plt.tight_layout()
-            plt.show()
+
+            return fig
 
         except Exception as e:
             print(f"Error while plotting comparison chart: {e}")
+            return None
+
+
+def testPlot():
+    # 假设 data 是一个包含国家 GDP 数据的字典
+    data = {
+        "USA": [5000, 5200, 5400, 5300, 5500, 5400, 5600],
+        "China": [3000, 3200, 3100, 3300, 3200, 3400, 3300],
+    }
+
+    query_core = QueryCore()
+    fig = query_core.plot(1980, 1986, data)
+
+    if fig:
+        # fig.savefig("gdp_trend.png")
+        plt.show()
+    else:
+        print("绘图失败")
 
 
 if __name__ == "__main__":

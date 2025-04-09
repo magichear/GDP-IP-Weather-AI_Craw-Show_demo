@@ -69,8 +69,8 @@ class Crawler:
             except Exception as e:
                 print(f"Error processing {url}: {e}")
 
-        # 按 Label 的自然顺序排序
-        self.final_data = dict(sorted(self.final_data.items()))
+        # 按 Label 的自然顺序排序  这里先不排序，到需要展示的时候再排  --> 因为国家和地区的查询不同，混在一起会降低初始化效率
+        # self.final_data = dict(sorted(self.final_data.items()))
 
         # 保存为 JSON 文件
         self.json_handler.jsonIO(
@@ -125,7 +125,8 @@ class Crawler:
                         td_data = tree.xpath(xpath_td)
                         if td_data:
                             value = td_data[0].text_content().strip()
-                            # 将 "n/a" 替换为 0，并转换为 float
+                            # 移除千位分隔符（逗号），然后转换为浮点数
+                            value = value.replace(",", "")
                             gdp_data.append(
                                 0.0 if value.lower() == "n/a" else float(value)
                             )
@@ -142,7 +143,7 @@ class Crawler:
                     f"[Attempt {attempt}/{MAX_RETRIES}] Error fetching table data from {url}: {e}"
                 )
                 if attempt < MAX_RETRIES:
-                    time.sleep(2**attempt)  # 指数退避策略，等待时间逐渐增加
+                    time.sleep(attempt << 1)
                 else:
                     print(f"[Error] Failed to fetch data after {MAX_RETRIES} attempts.")
                     return {}

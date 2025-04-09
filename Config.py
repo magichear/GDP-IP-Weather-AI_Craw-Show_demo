@@ -25,6 +25,14 @@ class Config:
     MAX_RETRIES = 5
     TIMEOUT = 30
 
+    #################################SERVER#####################################
+    LOG_FILE = "server.log"  # 日志文件路径
+    BATCH_SIZE = 20  # 批量查询的大小
+    START_YEAR = 1980  # 查询的起始年份
+    END_YEAR = 2029  # 查询的结束年份
+    CACHE_PATH = "data_cache.json"  # 缓存数据的文件路径
+    MAX_WORKERS = 5  # 线程池的最大工作线程数
+
     @classmethod
     def get(cls, key):
         return getattr(cls, key, None)
