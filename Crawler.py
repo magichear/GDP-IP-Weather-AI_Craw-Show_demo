@@ -22,6 +22,7 @@
 至于展示媒介，初步计划使用WebUI+Cloudflare转发
 """
 
+import time
 import requests
 from lxml import html
 from jsonIO import jsonIO
@@ -88,61 +89,67 @@ class Crawler:
         :param count: 数据组数，默认为 1；当 count > 1 时，处理多组数据
         :return: 包含表格中指定范围列数据的字典（键为国家名称，值为 GDP 数据列表）
         """
-        try:
-            response = requests.get(url)
-            response.raise_for_status()
-            tree = html.fromstring(response.content)
 
-            # 初始化结果字典
-            result = {}
+        MAX_RETRIES = Config.get("MAX_RETRIES")  # 最大重试次数
+        TIMEOUT = Config.get("TIMEOUT")  # 请求超时时间
 
-            # 循环处理每组数据
-            for group_index in range(1, count + 1):
-                # 构造每组数据的 XPath
-                group_xpath = Config.geGroupXpath(group_index, count)
+        for attempt in range(1, MAX_RETRIES + 1):
+            try:
+                response = requests.get(url, timeout=TIMEOUT)
+                response.raise_for_status()
+                tree = html.fromstring(response.content)
 
-                # 获取国家名称
-                country_name_xpath = f"{group_xpath}/td[2]"
-                country_name_data = tree.xpath(country_name_xpath)
-                if not country_name_data:
-                    print(f"[Warning] No country name found for group {group_index}.")
-                    continue
-                country_name = country_name_data[0].text_content().strip()
+                # 初始化结果字典
+                result = {}
 
-                # 获取 GDP 数据
-                gdp_data = []
-                td_start = Config.get("TABLE_START_INDEX")
-                for td_index in range(td_start, years + td_start + 1):
-                    xpath_td = f"{group_xpath}/td[{td_index}]"
-                    td_data = tree.xpath(xpath_td)
-                    if td_data:
-                        value = td_data[0].text_content().strip()
-                        # 将 "n/a" 替换为 0，并转换为 float
-                        gdp_data.append(0.0 if value.lower() == "n/a" else float(value))
-                    else:
-                        gdp_data.append(0.0)  # 如果没有数据，填充为 0
+                # 循环处理每组数据
+                for group_index in range(1, count):
+                    # 构造每组数据的 XPath
+                    group_xpath = Config.geGroupXpath(group_index, count)
 
-                # 将结果存入字典
-                result[country_name] = gdp_data
+                    # 获取国家名称
+                    country_name_xpath = f"{group_xpath}/td[2]"
+                    country_name_data = tree.xpath(country_name_xpath)
+                    if not country_name_data:
+                        print(
+                            f"[Warning] No country name found for group {group_index}."
+                        )
+                        continue
+                    country_name = country_name_data[0].text_content().strip()
 
-            return result
+                    # 获取 GDP 数据
+                    gdp_data = []
+                    td_start = Config.get("TABLE_START_INDEX")
+                    for td_index in range(td_start, years + td_start + 1):
+                        xpath_td = f"{group_xpath}/td[{td_index}]"
+                        td_data = tree.xpath(xpath_td)
+                        if td_data:
+                            value = td_data[0].text_content().strip()
+                            # 将 "n/a" 替换为 0，并转换为 float
+                            gdp_data.append(
+                                0.0 if value.lower() == "n/a" else float(value)
+                            )
+                        else:
+                            gdp_data.append(0.0)  # 如果没有数据，填充为 0
 
-        except Exception as e:
-            print(f"Error fetching table data from {url}: {e}")
-            return {}
+                    # 将结果存入字典
+                    result[country_name] = gdp_data
+
+                return result
+
+            except requests.exceptions.RequestException as e:
+                print(
+                    f"[Attempt {attempt}/{MAX_RETRIES}] Error fetching table data from {url}: {e}"
+                )
+                if attempt < MAX_RETRIES:
+                    time.sleep(2**attempt)  # 指数退避策略，等待时间逐渐增加
+                else:
+                    print(f"[Error] Failed to fetch data after {MAX_RETRIES} attempts.")
+                    return {}
 
 
 if __name__ == "__main__":
-    urls = [
-        "https://www.imf.org/en/Publications/WEO/weo-database/2024/October/select-countries?grp=995&sg=All-countries/Advanced-economies/Euro-area",
-        "https://www.imf.org/en/Publications/WEO/weo-database/2024/October/select-countries?grp=119&sg=All-countries/Advanced-economies/Major-advanced-economies-(G7)",
-        "https://www.imf.org/en/Publications/WEO/weo-database/2024/October/select-countries?grp=2505&sg=All-countries/Emerging-market-and-developing-economies/Emerging-and-developing-Asia",
-        "https://www.imf.org/en/Publications/WEO/weo-database/2024/October/select-countries?grp=2903&sg=All-countries/Emerging-market-and-developing-economies/Emerging-and-developing-Europe",
-        "https://www.imf.org/en/Publications/WEO/weo-database/2024/October/select-countries?grp=205&sg=All-countries/Emerging-market-and-developing-economies/Latin-America-and-the-Caribbean",
-        "https://www.imf.org/en/Publications/WEO/weo-database/2024/October/select-countries?grp=2400&sg=All-countries/Emerging-market-and-developing-economies/Middle-East-and-Central-Asia",
-        "https://www.imf.org/en/Publications/WEO/weo-database/2024/October/select-countries?grp=2603&sg=All-countries/Emerging-market-and-developing-economies/Sub-Saharan-Africa",
-        "AA_https://www.imf.org/en/Publications/WEO/weo-database/2024/October/select-aggr-data",
-    ]
+    urls = Config.get("PREPARE_URLS")
 
     crawler = Crawler(urls)
     crawler.prepareDB()

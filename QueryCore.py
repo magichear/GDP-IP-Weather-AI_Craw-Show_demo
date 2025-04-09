@@ -58,7 +58,7 @@ class QueryCore:
                 data[countryName] = gdp
 
         # 绘制所有数据
-        print(f"Data: {data}")
+        # print(f"Data: {data}")
         self.__plot(startYear, endYear, data)
 
     def __getCode(self, countryNames):
@@ -95,6 +95,14 @@ class QueryCore:
         :param data : 数据字典，键为国家名称，值为其对应年份内的GDP数据列表
         """
         try:
+
+            def find_extrema(data):
+                extrema_indices = []
+                for i in range(1, len(data) - 1):
+                    if data[i] > data[i - 1] and data[i] > data[i + 1]:
+                        extrema_indices.append((i, "max"))
+                return extrema_indices
+
             years = list(range(start, end + 1))
             plt.figure(figsize=(12, 6))
 
@@ -108,7 +116,20 @@ class QueryCore:
                 max_gdp = max(max_gdp, max(gdp_data))
                 plt.plot(years, gdp_data, marker="o", linestyle="-", label=country)
 
-            plt.title(f"GDP Comparison from {start} to {end}", fontsize=14)
+                # 在极大值处标注
+                extrema = find_extrema(gdp_data)
+                for index, extrema_type in extrema:
+                    if extrema_type == "max":
+                        plt.text(
+                            years[index],
+                            gdp_data[index],
+                            f"{gdp_data[index]:.2f}",
+                            color="red",
+                            fontsize=10,
+                            ha="center",
+                        )
+
+            plt.title(f"GDP Trend from {start} to {end}", fontsize=14)
             plt.xlabel("Year", fontsize=12)
             plt.ylabel("GDP (USD, in billions)", fontsize=12)
             plt.xticks(years, rotation=45)
