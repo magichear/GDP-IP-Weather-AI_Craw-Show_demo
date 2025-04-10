@@ -33,6 +33,22 @@ class Config:
     CACHE_PATH = "data_cache.json"  # 缓存数据的文件路径
     MAX_WORKERS = 5  # 线程池的最大工作线程数
 
+    #################################WebUI#####################################
+    INPUT_XPATH_KIMI_FIRST = (
+        '//*[@id="app"]/div/div/div[2]/div/div[2]/div[2]/div[1]/div/div[1]/p'
+    )
+    # //*[@id="app"]/div/div/div[2]/div/div[2]/div[2]/div[1]/div/div[1]/p
+    INPUT_XPATH_KIMI = (
+        '//*[@id="app"]/div/div/div[2]/div/div/div[1]/div[3]/div[2]/div[1]/div/div[1]/p'
+    )
+    # //*[@id="app"]/div/div/div[2]/div/div/div[1]/div[3]/div[2]/div[1]/div/div[1]/p
+    SUBMIT_BUTTON_XPATH_KIMI_FIRST = (
+        '//*[@id="app"]/div/div/div[2]/div/div[2]/div[2]/div[2]/div[2]/div/div'
+    )
+    SUBMIT_BUTTON_XPATH_KIMI = '//*[@id="app"]/div/div/div[2]/div/div/div[1]/div[3]/div[2]/div[2]/div[2]/div/div'
+    KIMI_URL = "https://kimi.moonshot.cn/chat/"
+    START_PROMPT = "接下来请你分析给定国家在指定年份内的GDP变化及可能影响因素(countries:China;Year:1980-2022.)。回复完毕后请严格回复“回复完毕”"
+
     @classmethod
     def get(cls, key):
         return getattr(cls, key, None)
@@ -42,3 +58,7 @@ class Config:
         if count == 1:
             return f"/html/body/div[3]/div[5]/div/div[2]/table[1]/tbody/tr"
         return f"/html/body/div[3]/div[5]/div/div[2]/table[1]/tbody/tr[{td_index}]"
+
+    @staticmethod
+    def getResponseXpath(msg_cnt):
+        return f'//*[@id="app"]/div/div/div[2]/div/div/div[1]/div[2]/div/div[{2 * msg_cnt}]/div/div[2]/div[1]/div[1]/div[2]/div'

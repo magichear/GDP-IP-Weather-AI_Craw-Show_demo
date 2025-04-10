@@ -99,10 +99,25 @@ class QueryCore:
         try:
 
             def find_extrema(data):
+                """
+                找到数据中的极大值和最大值，并统一标注为 "max"。
+                :param data: 输入数据列表
+                :return: 包含极大值和最大值的索引及类型的列表
+                """
                 extrema_indices = []
+
+                # 极大值
                 for i in range(1, len(data) - 1):
                     if data[i] > data[i - 1] and data[i] > data[i + 1]:
                         extrema_indices.append((i, "max"))
+
+                # 最大值，可能有多个
+                max_value = max(data)
+                max_indices = [i for i, value in enumerate(data) if value == max_value]
+                for idx in max_indices:
+                    if (idx, "max") not in extrema_indices:
+                        extrema_indices.append((idx, "max"))
+
                 return extrema_indices
 
             years = list(range(start, end + 1))

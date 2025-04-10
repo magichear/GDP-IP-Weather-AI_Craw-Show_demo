@@ -1,6 +1,10 @@
 import gradio as gr
+import matplotlib
 import matplotlib.pyplot as plt
 from Config import Config
+
+matplotlib.use("Agg")  # 使用非交互式后端以避免图形显示问题（很奇怪，昨天不加也能跑）
+from AiModule import AskTheFriendlyAI
 
 
 class WebUI:
@@ -14,6 +18,10 @@ class WebUI:
         self.is_ready = False
         self.interface = self.create_interface()  # 创建界面
 
+        # 将 server 的 logger 传递给 AiModule
+        self.ai_module = AskTheFriendlyAI(url=Config.get("KIMI_URL"))
+        self.ai_module.start_browser()  # 启动浏览器
+
     def create_interface(self):
         """
         创建 Gradio 界面。
@@ -25,7 +33,7 @@ class WebUI:
             :param selected_countries: 用户选择的国家名称列表
             :param start_year: 用户选择的起始年份
             :param end_year: 用户选择的结束年份
-            :return: GDP 趋势图或提示信息
+            :return: GDP 趋势图
             """
             if not self.server.is_ready:
                 # 记录日志
@@ -51,6 +59,7 @@ class WebUI:
                 fig = self.server.getGDPTrend(
                     selected_countries, int(start_year), int(end_year)
                 )
+
                 if fig is None:
                     # 如果返回值为 None，记录日志并生成一个空图形
                     self.server.logger.error(
@@ -66,7 +75,9 @@ class WebUI:
                         va="center",
                     )
                     ax.axis("off")
-                return fig
+                    return fig
+
+                return fig  # 返回图形
             except Exception as e:
                 # 捕获异常并记录日志
                 self.server.logger.exception(f"查询 GDP 趋势图时发生错误：{e}")
@@ -77,6 +88,36 @@ class WebUI:
                 )
                 ax.axis("off")
                 return fig
+
+        def query_ai_analysis(selected_countries, start_year, end_year):
+            """
+            查询 AI 分析结果。
+            :param selected_countries: 用户选择的国家名称列表
+            :param start_year: 用户选择的起始年份
+            :param end_year: 用户选择的结束年份
+            :return: AI 分析结果
+            """
+            try:
+                # 调用服务器的 getRawGDPData 方法，传递国家列表和年份范围
+                self.server.logger.info(
+                    f"查询 AI 分析，国家：{selected_countries}，年份范围：{start_year}-{end_year}"
+                )
+                raw_data = {}
+                raw_data["countries"] = selected_countries
+                raw_data["start_year"] = start_year
+                raw_data["end_year"] = end_year
+                query_data = self.ai_module.format_input_data(
+                    raw_data
+                )  # 格式化输入数据
+                self.server.logger.info(f"[DEBUG]: {query_data}")
+                self.ai_module.send_message((query_data))
+                ai_response = self.ai_module.receive_message()
+
+                return ai_response  # 返回 AI 的回复
+            except Exception as e:
+                # 捕获异常并记录日志
+                self.server.logger.exception(f"查询 AI 分析时发生错误：{e}")
+                return f"查询失败：{e}"
 
         def update_country_names():
             """
@@ -134,12 +175,20 @@ class WebUI:
             with gr.Row():
                 submit_button = gr.Button("查询", elem_id="submit_button")
             output = gr.Plot(label="GDP 趋势图")
+            message_box = gr.Markdown(
+                label="解析：", value="请点击查询按钮并等待获取解析结果"
+            )
 
             # 绑定按钮点击事件
             submit_button.click(
                 query_gdp_trend,
                 inputs=[country_selector, start_year_selector, end_year_selector],
-                outputs=output,
+                outputs=output,  # 仅更新图形
+            )
+            submit_button.click(
+                query_ai_analysis,
+                inputs=[country_selector, start_year_selector, end_year_selector],
+                outputs=message_box,  # 仅更新“解析”文本框
             )
 
             # 动态更新终止年份选项

@@ -169,6 +169,10 @@ class Server:
 
         return self.query_core.plot(start=start, end=end, data=data)
 
+    # 本来是为AI模块准备的，但似乎用不上了（KIMI不登录限制输入字数，后续如果加上cookie或者改用API可以启用，效果更好）
+    def getRawGDPData(self, selected_countries, start_year, end_year):
+        return self.query_core.query(start_year, end_year, selected_countries)
+
     def __input(self):
         """
         获取用户输入的国家名称。
@@ -219,4 +223,9 @@ class Server:
 
 if __name__ == "__main__":
     server = Server()
-    server.run()
+    # server.run()
+    server.start(useNew=False)
+    raw_data = server.getRawGDPData(["Aruba", "Belize"], int(2000), int(2022))
+    raw_data["start_year"] = 2000
+    raw_data["end_year"] = 2022
+    print(raw_data)

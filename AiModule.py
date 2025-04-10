@@ -5,6 +5,7 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 import time
+from Config import Config
 
 
 class AskTheFriendlyAI:
@@ -29,7 +30,7 @@ class AskTheFriendlyAI:
         edge_options.add_argument("--window-size=1920,1080")
         edge_options.add_argument("--disable-blink-features=AutomationControlled")
         edge_options.add_argument("--no-sandbox")
-        edge_options.add_argument("--headless")
+        # edge_options.add_argument("--headless")
         edge_options.add_argument("--disable-dev-shm-usage")
         edge_options.add_argument("--disable-extensions")
         edge_options.add_argument("--disable-infobars")
@@ -40,7 +41,10 @@ class AskTheFriendlyAI:
         )
         self.driver = webdriver.Edge(options=edge_options)
         self.driver.get(self.url)
-        time.sleep(3)  # 等待页面加载
+        time.sleep(10)
+        self.send_message("", True)
+        time.sleep(10)
+        self.receive_message()
 
     def close_browser(self):
         """
@@ -49,7 +53,7 @@ class AskTheFriendlyAI:
         if self.driver:
             self.driver.quit()
 
-    def send_message(self, input_text, first_send):
+    def send_message(self, input_text, first_send=False):
         """
         发送消息
         :param input_text: 要发送的消息内容
@@ -58,17 +62,18 @@ class AskTheFriendlyAI:
         try:
             # 根据是否是第一次发送，选择不同的 XPath
             if first_send:
-                input_box_xpath = '//*[@id="app"]/div/div/div[2]/div/div[2]/div[2]/div[1]/div/div[1]/p'
-                submit_button_xpath = '//*[@id="app"]/div/div/div[2]/div/div[2]/div[2]/div[2]/div[2]/div/div'
+                input_box_xpath = Config.get("INPUT_XPATH_KIMI_FIRST")
+                submit_button_xpath = Config.get("SUBMIT_BUTTON_XPATH_KIMI_FIRST")
+                input_text = Config.get("START_PROMPT") + input_text
             else:
-                input_box_xpath = '//*[@id="app"]/div/div/div[2]/div/div/div[1]/div[3]/div[2]/div[1]/div/div[1]/p'
-                submit_button_xpath = '//*[@id="app"]/div/div/div[2]/div/div/div[1]/div[3]/div[2]/div[2]/div[2]/div/div'
+                input_box_xpath = Config.get("INPUT_XPATH_KIMI")
+                submit_button_xpath = Config.get("SUBMIT_BUTTON_XPATH_KIMI")
 
-            # 定位输入框并输入内容
+            # 定位输入框
             input_box = self.driver.find_element(By.XPATH, input_box_xpath)
             input_box.send_keys(input_text)
+
             print(f"[DEBUG] 输入框已定位: {input_box_xpath}")
-            time.sleep(2)
 
             # 定位提交按钮并点击
             submit_button = self.driver.find_element(By.XPATH, submit_button_xpath)
@@ -88,7 +93,7 @@ class AskTheFriendlyAI:
         new_text_list = []  # 用于存储新增的文本内容
         full_html = ""  # 用于存储完整的 HTML 源码
         # 根据 msg_cnt 动态生成 XPath
-        response_xpath = f'//*[@id="app"]/div/div/div[2]/div/div/div[1]/div[2]/div/div[{2 * self.msg_cnt}]/div/div[2]/div[1]/div[1]/div[2]/div'
+        response_xpath = Config.getResponseXpath(self.msg_cnt)
         print(f"[DEBUG] 当前 XPath: {response_xpath}")
         time.sleep(2)
         while True:
@@ -108,7 +113,7 @@ class AskTheFriendlyAI:
                     print(f"[DEBUG] 成功获取新内容: {new_text}")
 
                 # 如果回复内容已完整加载，可以根据具体情况判断是否退出循环
-                if "我已回复完毕" in response_text:
+                if "回复完毕" in response_text:
                     print("\n\n[INFO] 回复已完整加载。")
                     # 获取完整的 HTML 源码
                     full_html = response_element.get_attribute("outerHTML")
@@ -118,13 +123,10 @@ class AskTheFriendlyAI:
             except Exception as e:
                 print(f"\n\n[ERROR] 获取回复内容时发生错误: {e}")
                 break
-
+        self.msg_cnt += 1
         # 将新数据写入 JSON 文件
         if new_text_list:
-            self.write_to_json(self.msg_cnt, new_text_list, full_html)
-
-        # 接收完一条消息后，自增 msg_cnt
-        self.msg_cnt += 1
+            return self.write_to_json(self.msg_cnt, new_text_list, full_html)
 
     def write_to_json(self, msg_cnt, new_text_list, full_html):
         """
@@ -146,7 +148,7 @@ class AskTheFriendlyAI:
 
             # 删除最后的“我已回复完毕”内容
             last_node = soup.find("div", class_="paragraph last-node")
-            if last_node and "我已回复完毕" in last_node.text:
+            if last_node and "回复完毕" in last_node.text:
                 last_node.decompose()  # 删除整个 <div> 标签及其内容
 
             full_html = str(soup)  # 更新 HTML 源码
@@ -175,37 +177,57 @@ class AskTheFriendlyAI:
         except Exception as e:
             print(f"[ERROR] 写入 JSON 文件时发生错误: {e}")
 
+        return full_html
+
     def run(self, input_texts):
         """
         顺序执行消息发送和接收
         :param input_texts: 待发送的消息列表
+        这里对字符串迭代，当然每次只发送一个字符，卡了我一整个下午，无语了家人们
         """
         try:
             # 启动浏览器
             self.start_browser()
-
-            first_send = True  # 标记是否是第一次发送
-
-            for input_text in input_texts:
-                # 发送消息
-                self.send_message(input_text, first_send)
-                first_send = False  # 第一次发送后切换为 False
-
-                # 接收消息
-                self.receive_message()
+            # 发送消息
+            self.send_message(input_texts)
+            # 接收消息
+            self.receive_message()
+            time.sleep(1)
 
         finally:
             # 关闭浏览器
             self.close_browser()
 
+    def format_input_data(self, input_data):
+        """
+        将输入数据结构转换为单行字符串格式。
+        :param input_data: 包含国家列表、起始年份和结束年份的字典
+        :return: 格式化后的单行字符串
+        """
+        try:
+            # 提取数据
+            countries = ",".join(
+                input_data.get("countries", [])
+            )  # 将国家列表用逗号连接
+            start_year = input_data.get("start_year", "")
+            end_year = input_data.get("end_year", "")
+
+            # 格式化为指定的单行字符串
+            formatted_string = f"countries:{countries};Year:{start_year}-{end_year}."
+            return formatted_string
+        except Exception as e:
+            raise ValueError(f"格式化输入数据时发生错误: {e}")
+
 
 if __name__ == "__main__":
-    input_texts = [
-        "请你详细介绍一下统一牌绿茶（低糖）的成分和营养成分表。当你回复完毕后请严格回复“我已回复完毕”，之后你对我所有提问的回复都需要以“我已回复完毕”结尾",
-        "低糖会比全糖更健康吗？",
-        "请问今天的天气怎么样？",
-    ]
-    url = "https://kimi.moonshot.cn/chat/"
+    # 示例用法
+    url = Config.get("KIMI_URL")
+    ai_module = AskTheFriendlyAI(url)
+    input_texts = {
+        "countries": ["Advanced economies", "United Kingdom", "United States", "China"],
+        "start_year": 1980,
+        "end_year": 2022,
+    }
+    ai_module.run(ai_module.format_input_data(input_texts))
 
-    browser = AskTheFriendlyAI(url)
-    browser.run(input_texts)
+    # countries:Advanced economies,United Kingdom,United States,China;1980-2022.
