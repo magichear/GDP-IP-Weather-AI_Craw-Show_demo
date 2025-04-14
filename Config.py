@@ -25,6 +25,9 @@ class Config:
     MAX_RETRIES = 5
     TIMEOUT = 30
 
+    WEATHER_API_URL = "https://api.open-meteo.com/v1/forecast"
+    IPADDRESS_API_URL = "http://ip-api.com/json/"
+
     #################################SERVER#####################################
     LOG_FILE = "server.log"  # 日志文件路径
     BATCH_SIZE = 20  # 批量查询的大小
@@ -47,7 +50,7 @@ class Config:
     )
     SUBMIT_BUTTON_XPATH_KIMI = '//*[@id="app"]/div/div/div[2]/div/div/div[1]/div[3]/div[2]/div[2]/div[2]/div/div'
     KIMI_URL = "https://kimi.moonshot.cn/chat/"
-    START_PROMPT = "接下来请你分析给定国家在指定年份内的GDP变化及可能影响因素(countries:China;Year:1980-2022.)。回复完毕后请严格回复“回复完毕”"
+    START_PROMPT = "接下来请简要分析给定国家在指定年份内的GDP变化及可能影响因素(countries:China;Year:1980-2022.)。回复完毕后请严格回复“回复完毕”"
 
     @classmethod
     def get(cls, key):

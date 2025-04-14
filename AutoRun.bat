@@ -1,18 +1,22 @@
 @echo off
-REM Set script path
+chcp 65001 >nul
+set CLOUD_PATH=use_cloudflare_tunnel.py
 set SCRIPT_PATH=Main.py
 
-REM Check if script exists
 if not exist "%SCRIPT_PATH%" (
-    echo Error: Script file not found. Please check the SCRIPT_PATH setting.
+    echo Error: 主程序不存在
     pause
     exit /b 1
 )
 
-REM Start the script
-echo Starting the program...
-python "%SCRIPT_PATH%"
+cloudflared --version >nul 2>&1
+if %ERRORLEVEL% equ 0 (
+    echo Cloudflared 正常工作，使用穿透功能
+    python "%CLOUD_PATH%"
+) else (
+    echo Cloudflared 未安装，仅本地访问
+    python "%SCRIPT_PATH%"
+)
 
-REM Wait for user input before exiting
-echo Program has exited.
+echo 程序结束
 pause

@@ -185,6 +185,9 @@ class Server:
             return None
         return [name.strip() for name in user_input.split(";")]
 
+    def getWeatherInfo(self, client_ip=None):
+        return self.crawler.getWeather(client_ip=client_ip)
+
     def getNames(self):
         return list(self.query_core.data.keys())
 

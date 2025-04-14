@@ -148,6 +148,50 @@ class Crawler:
                     print(f"[Error] Failed to fetch data after {MAX_RETRIES} attempts.")
                     return {}
 
+    def getWeather(self, client_ip=None):
+        if client_ip == "127.0.0.1":
+            client_ip = "157.254.20.6"
+
+        urlA = Config.get("IPADDRESS_API_URL")
+        if client_ip:
+            urlA += client_ip
+        url = Config.get("WEATHER_API_URL")
+
+        try:
+            response_ip = requests.get(urlA)
+            response_ip.raise_for_status()
+            data = response_ip.json()
+            result = (
+                f"IP地址: {data['query']}\n"
+                f"国家: {data['country']}\n"
+                f"城市: {data['city']}\n"
+                f"经纬度: {data['lat']}, {data['lon']}\n"
+                f"ISP供应商: {data['isp']}"
+            )
+
+            params = {
+                "latitude": data["lat"],
+                "longitude": data["lon"],
+                "current_weather": True,
+            }
+
+            response = requests.get(url, params=params)
+            response.raise_for_status()
+            data = response.json()
+
+            weather = {}
+            weather["ip_res"] = result
+            weather["coodinates"] = [data.get("latitude"), data.get("longitude")]
+            weather["elevation"] = data.get("elevation")
+            weather["timezone"] = data.get("timezone")
+            current_weather = data.get("current_weather", {})
+            weather["temperature"] = current_weather.get("temperature")
+            weather["is_day"] = current_weather.get("is_day")
+            weather["windspeed"] = current_weather.get("windspeed")
+            return weather
+        except requests.exceptions.RequestException as e:
+            return None
+
 
 if __name__ == "__main__":
     urls = Config.get("PREPARE_URLS")

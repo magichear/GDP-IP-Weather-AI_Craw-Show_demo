@@ -30,7 +30,7 @@ class AskTheFriendlyAI:
         edge_options.add_argument("--window-size=1920,1080")
         edge_options.add_argument("--disable-blink-features=AutomationControlled")
         edge_options.add_argument("--no-sandbox")
-        # edge_options.add_argument("--headless")
+        edge_options.add_argument("--headless")
         edge_options.add_argument("--disable-dev-shm-usage")
         edge_options.add_argument("--disable-extensions")
         edge_options.add_argument("--disable-infobars")
@@ -41,9 +41,9 @@ class AskTheFriendlyAI:
         )
         self.driver = webdriver.Edge(options=edge_options)
         self.driver.get(self.url)
-        time.sleep(10)
+        time.sleep(1)
         self.send_message("", True)
-        time.sleep(10)
+        time.sleep(1)
         self.receive_message()
 
     def close_browser(self):
@@ -166,7 +166,7 @@ class AskTheFriendlyAI:
             + new_text_list,
             "full_html": full_html,
         }
-        print(f"[DEBUG] 更新后的数据: {old_data}")
+        # print(f"[DEBUG] 更新后的数据: {old_data}")
         # 写入文件
         try:
             self.json_handler.jsonIO(

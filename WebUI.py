@@ -2,6 +2,7 @@ import gradio as gr
 import matplotlib
 import matplotlib.pyplot as plt
 from Config import Config
+import threading
 
 matplotlib.use("Agg")  # 使用非交互式后端以避免图形显示问题（很奇怪，昨天不加也能跑）
 from AiModule import AskTheFriendlyAI
@@ -14,13 +15,16 @@ class WebUI:
         :param server: Server 类的实例
         """
         self.server = server
+
         self.countryNames = []  # 初始化为空列表
         self.is_ready = False
         self.interface = self.create_interface()  # 创建界面
 
-        # 将 server 的 logger 传递给 AiModule
         self.ai_module = AskTheFriendlyAI(url=Config.get("KIMI_URL"))
-        self.ai_module.start_browser()  # 启动浏览器
+        self.browser_thread = threading.Thread(
+            target=self.ai_module.start_browser, daemon=True
+        )
+        self.browser_thread.start()
 
     def create_interface(self):
         """
@@ -89,6 +93,10 @@ class WebUI:
                 ax.axis("off")
                 return fig
 
+        # 这一部分其实改成进程间通信会比较好一点，可以实现流式输出，并且还可以弄一个任务队列/拒绝服务策略
+        # 另一种改法是在receive_message中每接收到新数据就存一次（这部分的流式输出已经实现过了）
+        #        之后在gradio这里就循环查询有没有新数据，有就更新（还可以设一个信号量来标识是否需要更新）
+        # 但是这两种改法都需要修改大段代码，鉴于这只是个小作业，卷到这个程度感觉已经可以了
         def query_ai_analysis(selected_countries, start_year, end_year):
             """
             查询 AI 分析结果。
@@ -142,6 +150,25 @@ class WebUI:
                 )
             return gr.update()
 
+        def get_client_ip_info(request=None):
+            # 这一部分想做成获取用户IP的，但暂时不好实现，先空着
+            if request:
+                client_ip = request.headers.get("X-Forwarded-For", request.client.host)
+                client_ip = client_ip.split(",")[0].strip()
+            else:
+                client_ip = None
+            info = self.server.getWeatherInfo(client_ip)
+            if info:
+                return (
+                    f"服务器位置 | {info['ip_res']}\n"
+                    f" | 温度: {info['temperature']} ℃\n"
+                    f"海拔: {info['elevation']} m\n"
+                    f"时区: {info['timezone']}\n"
+                    f"风速: {info['windspeed']} km/h"
+                )
+            else:
+                return "无法获取信息"
+
         # 创建 Gradio 界面
         with gr.Blocks(
             css="""
@@ -152,6 +179,14 @@ class WebUI:
             }
         """
         ) as demo:
+            client_ip_info_box = gr.Markdown(
+                label="服务器信息", value="正在获取服务器信息..."
+            )
+            demo.load(
+                lambda: get_client_ip_info(),
+                inputs=None,
+                outputs=client_ip_info_box,
+            )
             gr.Markdown("# GDP 趋势查询系统")
             with gr.Row():
                 country_selector = gr.Dropdown(
