@@ -1325,3 +1325,33 @@ AttributeError: 'WebUI' object has no attribute 'ai_module'
 2025-04-15 14:40:55,229 - INFO - [Server] Stopping server...
 2025-04-15 14:40:55,230 - INFO - 服务已关闭。
 2025-04-15 14:40:55,231 - INFO - 所有异步任务已取消。
+2025-04-15 15:13:50,368 - WARNING - [Server] 缓存不存在，将重新获取
+2025-04-15 15:13:50,369 - INFO - [Server] Starting server...
+2025-04-15 15:13:50,370 - INFO - [Server] Preparing database...
+2025-04-15 15:13:50,370 - INFO - 启动 Gradio 界面。
+2025-04-15 15:13:50,492 - INFO - HTTP Request: GET http://127.0.0.1:7860/gradio_api/startup-events "HTTP/1.1 200 OK"
+2025-04-15 15:13:50,519 - INFO - HTTP Request: HEAD http://127.0.0.1:7860/ "HTTP/1.1 200 OK"
+2025-04-15 15:13:51,171 - INFO - HTTP Request: GET https://api.gradio.app/pkg-version "HTTP/1.1 200 OK"
+2025-04-15 15:14:13,696 - INFO - [Server] Loading country map...
+2025-04-15 15:14:13,696 - INFO - [Server] Querying data for all countries and regions using threads...
+2025-04-15 15:14:13,696 - INFO - [Server] Querying batch: ['ASEAN-5', 'Advanced economies', 'Afghanistan', 'Albania', 'Algeria', 'Angola', 'Antigua and Barbuda', 'Argentina', 'Armenia', 'Aruba', 'Austria', 'Azerbaijan', 'Bahrain', 'Bangladesh', 'Barbados', 'Belarus', 'Belgium', 'Belize', 'Benin', 'Bhutan']
+2025-04-15 15:14:13,696 - INFO - [Server] Querying batch: ['Bolivia', 'Bosnia and Herzegovina', 'Botswana', 'Brazil', 'Brunei Darussalam', 'Bulgaria', 'Burkina Faso', 'Burundi', 'Cabo Verde', 'Cambodia', 'Cameroon', 'Canada', 'Central African Republic', 'Chad', 'Chile', 'China', 'Colombia', 'Comoros', 'Costa Rica', 'Croatia']
+2025-04-15 15:14:13,696 - INFO - [Server] Querying batch: ['Cyprus', "Côte d'Ivoire", 'Democratic Republic of the Congo', 'Djibouti', 'Dominica', 'Dominican Republic', 'Ecuador', 'Egypt', 'El Salvador', 'Emerging and developing Asia', 'Emerging and developing Europe', 'Emerging market and developing economies', 'Equatorial Guinea', 'Eritrea', 'Estonia', 'Eswatini', 'Ethiopia', 'Euro area', 'European Union', 'Fiji']
+2025-04-15 15:14:13,696 - INFO - [Server] Querying batch: ['Finland', 'France', 'Gabon', 'Georgia', 'Germany', 'Ghana', 'Greece', 'Grenada', 'Guatemala', 'Guinea', 'Guinea-Bissau', 'Guyana', 'Haiti', 'Honduras', 'Hungary', 'India', 'Indonesia', 'Iraq', 'Ireland', 'Islamic Republic of Iran']
+2025-04-15 15:14:13,696 - INFO - [Server] Querying batch: ['Italy', 'Jamaica', 'Japan', 'Jordan', 'Kazakhstan', 'Kenya', 'Kiribati', 'Kosovo', 'Kuwait', 'Kyrgyz Republic', 'Lao P.D.R.', 'Latin America and the Caribbean', 'Latvia', 'Lebanon', 'Lesotho', 'Liberia', 'Libya', 'Lithuania', 'Luxembourg', 'Madagascar']
+2025-04-15 15:14:15,710 - INFO - [Server] Querying batch: ['Major advanced economies (G7)', 'Malawi', 'Malaysia', 'Maldives', 'Mali', 'Malta', 'Marshall Islands', 'Mauritania', 'Mauritius', 'Mexico', 'Micronesia', 'Middle East and Central Asia', 'Moldova', 'Mongolia', 'Montenegro', 'Morocco', 'Mozambique', 'Myanmar', 'Namibia', 'Nauru']
+2025-04-15 15:14:16,034 - INFO - [Server] Querying batch: ['Nepal', 'Netherlands', 'Nicaragua', 'Niger', 'Nigeria', 'North Macedonia', 'Oman', 'Other advanced economies (Advanced economies excluding G7 and euro area)', 'Pakistan', 'Palau', 'Panama', 'Papua New Guinea', 'Paraguay', 'Peru', 'Philippines', 'Poland', 'Portugal', 'Qatar', 'Republic of Congo', 'Romania']
+2025-04-15 15:14:17,892 - INFO - [Server] Querying batch: ['Russia', 'Rwanda', 'Samoa', 'Saudi Arabia', 'Senegal', 'Serbia', 'Seychelles', 'Sierra Leone', 'Slovak Republic', 'Slovenia', 'Solomon Islands', 'Somalia', 'South Africa', 'South Sudan', 'Spain', 'Sri Lanka', 'St. Kitts and Nevis', 'St. Lucia', 'St. Vincent and the Grenadines', 'Sub-Saharan Africa']
+2025-04-15 15:14:18,111 - INFO - [Server] Querying batch: ['Sudan', 'Suriname', 'Syria', 'São Tomé and Príncipe', 'Tajikistan', 'Tanzania', 'Thailand', 'The Bahamas', 'The Gambia', 'Timor-Leste', 'Togo', 'Tonga', 'Trinidad and Tobago', 'Tunisia', 'Turkmenistan', 'Tuvalu', 'Türkiye', 'Uganda', 'Ukraine', 'United Arab Emirates']
+2025-04-15 15:14:18,861 - INFO - [Server] Querying batch: ['United Kingdom', 'United States', 'Uruguay', 'Uzbekistan', 'Vanuatu', 'Venezuela', 'Vietnam', 'West Bank and Gaza', 'World', 'Yemen', 'Zambia', 'Zimbabwe']
+2025-04-15 15:14:24,697 - INFO - [Server] Saving cached data...
+2025-04-15 15:14:24,709 - INFO - [Server] Cache saved to data_cache.json.
+2025-04-15 15:14:24,709 - INFO - [Server] Server started successfully.
+2025-04-15 15:18:15,733 - INFO - 更新国家名称列表。
+2025-04-15 15:19:19,503 - INFO - 查询 AI 分析，国家：['China', 'United Kingdom', 'United States', 'Germany']，年份范围：1980-2022
+2025-04-15 15:19:19,503 - INFO - 查询 GDP 趋势图，国家：['China', 'United Kingdom', 'United States', 'Germany']，年份范围：1980-2022
+2025-04-15 15:19:19,503 - INFO - [DEBUG]: countries:China,United Kingdom,United States,Germany;Year:1980-2022.
+2025-04-15 15:22:38,562 - INFO - 检测到中断信号，正在关闭服务...
+2025-04-15 15:22:38,562 - INFO - [Server] Stopping server...
+2025-04-15 15:22:38,562 - INFO - 服务已关闭。
+2025-04-15 15:22:38,562 - INFO - 所有异步任务已取消。
