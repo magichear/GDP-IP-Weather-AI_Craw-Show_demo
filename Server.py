@@ -38,10 +38,17 @@ class Server:
         """
         启动服务器，完成初始化和数据缓存。
         """
+        if not os.path.exists("countryMap.json") or not os.path.exists(
+            "data_cache.json"
+        ):
+            self.logger.warning("[Server] 缓存不存在，将重新获取")
+            useNew = True
+
         self.logger.info("[Server] Starting server...")
         self.logger.info("[Server] Preparing database...")
         if useNew:
             self.crawler.prepareDB()
+            self.query_core = QueryCore()  # 重启查询模块
         self.logger.info("[Server] Loading country map...")
         country_map = self.query_core.data
         if not country_map:
@@ -60,6 +67,7 @@ class Server:
         else:
             self.loadCache()
         self.logger.info("[Server] Server started successfully.")
+        self.is_ready = True  # 初始化完成后设置标志位
 
     def queryAll(self, country_map):
         """
@@ -215,7 +223,6 @@ class Server:
         异步启动服务器
         """
         await asyncio.to_thread(self.start)  # 异步运行原有的 start 方法
-        self.is_ready = True  # 初始化完成后设置标志位
 
     def stop(self):
         """
